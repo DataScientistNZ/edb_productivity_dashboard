@@ -1,0 +1,17 @@
+# Ignore everything
+*
+  
+# But not these files...
+!.gitignore
+!CGPI.csv
+!CPI.csv
+!LCI.csv
+!PPI.csv
+# etc...
+
+# let's keep that file as required for the dashboard
+!extracted_data.csv
+
+
+# ...even if they are in subdirectories
+!*/
