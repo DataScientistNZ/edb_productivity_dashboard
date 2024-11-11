@@ -5,8 +5,9 @@
 
 This project is freely inspired from this [project](https://comcom.govt.nz/regulated-industries/electricity-lines/electricity-distributor-performance-and-data/productivity-and-efficiency-study-of-electricity-distributors) delivered by CEPA.
 
-It is a personal project made in my free time to understand underlying patterns better, and as well to work on a way to share findings efficiently through technology.
-There is a corresponding shiny interface that will be made available here soon, its development is still being worked on at the moment.
+Is is also inspired by the data preparation and implementation from this personal [project](https://github.com/Cracroule/edb_productivity). 
+
+It is a project made to understand underlying patterns better, and as well to work on a way to efficiently share findings about productivity through technology.
 
 ## Data
 
