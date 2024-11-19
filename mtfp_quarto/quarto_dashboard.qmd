@@ -4,8 +4,14 @@ format:
   dashboard:
     scrolling: true 
     nav-buttons:
-      - icon: gitlab
+      - text: Home
+        icon: list
+        href: https://datascientistnz.github.io/edb_productivity_dashboard
+      - text: Code
+        icon: github
         href: https://github.com/DataScientistNZ/edb_productivity_dashboard
+
+
 editor: 
   markdown: 
     wrap: 72

@@ -11,7 +11,30 @@ editor:
     wrap: 72
 ---
 
+```{r, echo=F}
 
+# round all numeric values to n digits (n=3 by default)
+# we do so to allow a nice display
+# makes a copy of the input data by default (use copy=F if undesired)
+round_all_numeric_values <- function(dt, digits=3, copy=T) {
+  if (copy) dt <- data.table(dt)
+  for (nm in names(dt)) {
+    if (is.numeric(dt[[nm]])) {
+      dt[, (nm) := round(get(nm), digits)]
+    }
+  }
+  dt
+}
+
+# custom made display of datatable
+# displaying a copy of the table (copy made in the rounding function)
+my_datatable <- function(dt, ..., digits=3) {
+  DT::datatable(round_all_numeric_values(dt, digits=digits), ..., 
+                extensions = 'Buttons', options = list(
+                  dom = 'ifrtpB', buttons = c('copy', 'csv')))
+}
+
+```
 
 # Documentation
 
@@ -72,7 +95,7 @@ $S_{i, k, t} \ = (P_{i,k,t} \ \cdot \ Q_{i,k,t})\  / \ \sum_{j \in \{inputs\ or\
 
 $\overline{S_i} \ = \ \mathop{mean}_{k, t} \ \ (S_{i, k, t})$
 
-```{r, echp-F}
+```{r, echo=F}
 
 # load resources and set common variables
 source(file.path(here::here(), "R", "00_index_based_mtfp.R"))
@@ -141,17 +164,7 @@ eplot_line(res_all, "disc_yr", "mtfp", groupby="edb", x_lab="") |>
 
 ```{r, echo=F}
 
-round_all_numeric_values <- function(dt, digits=3) {
-  dt <- data.table(dt)
-  for (nm in names(dt)) {
-    if (is.numeric(dt[[nm]])) {
-      dt[, (nm) := round(get(nm), digits)]
-    }
-  }
-  dt
-}
-
-DT::datatable(round_all_numeric_values(res_all))
+my_datatable(res_all)
 
 ```
 
@@ -233,13 +246,13 @@ round_all_numeric_values <- function(dt, digits=3) {
   dt
 }
 
-DT::datatable(round_all_numeric_values(res_non_exempt))
+my_datatable(res_non_exempt)
 
 ```
 
 ```{r, echo=F}
 
-DT::datatable(round_all_numeric_values(res_exempt))
+my_datatable(res_exempt)
 
 ```
 
@@ -267,7 +280,7 @@ eplot_line(res_industry, "disc_yr", "mtfp_industry", groupby="edb", x_lab="") |>
 ```
 
 ```{r, echo=F}
-DT::datatable(round_all_numeric_values(res_industry))
+my_datatable(res_industry)
 ```
 
 
@@ -338,23 +351,13 @@ eplot_line(res_exempt, "disc_yr", "mtfp", groupby="edb", x_lab="") |>
 
 ```{r, echo=F}
 
-round_all_numeric_values <- function(dt, digits=3) {
-  dt <- data.table(dt)
-  for (nm in names(dt)) {
-    if (is.numeric(dt[[nm]])) {
-      dt[, (nm) := round(get(nm), digits)]
-    }
-  }
-  dt
-}
-
-DT::datatable(round_all_numeric_values(res_non_exempt))
+my_datatable(res_non_exempt)
 
 ```
 
 ```{r, echo=F}
 
-DT::datatable(round_all_numeric_values(res_exempt))
+my_datatable(res_exempt)
 
 ```
 
@@ -430,23 +433,13 @@ eplot_line(res_exempt, "disc_yr", "mtfp", groupby="edb", x_lab="") |>
 
 ```{r, echo=F}
 
-round_all_numeric_values <- function(dt, digits=3) {
-  dt <- data.table(dt)
-  for (nm in names(dt)) {
-    if (is.numeric(dt[[nm]])) {
-      dt[, (nm) := round(get(nm), digits)]
-    }
-  }
-  dt
-}
-
-DT::datatable(round_all_numeric_values(res_non_exempt))
+my_datatable(res_non_exempt)
 
 ```
 
 ```{r, echo=F}
 
-DT::datatable(round_all_numeric_values(res_exempt))
+my_datatable(res_exempt)
 
 ```
 
