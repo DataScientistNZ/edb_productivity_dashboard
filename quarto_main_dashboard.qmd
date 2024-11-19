@@ -1,0 +1,54 @@
+---
+title: "EDB Productivity"
+format: 
+  dashboard:
+    scrolling: true 
+    nav-buttons:
+      - text: Index-based
+        icon: graph-up-arrow
+        href: https://datascientistnz.github.io/edb_productivity_dashboard/quarto/mtfp
+      - text: Code
+        icon: github
+        href: https://github.com/DataScientistNZ/edb_productivity_dashboard
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+```{r, echo=F}
+
+# round all numeric values to n digits (n=3 by default)
+# we do so to allow a nice display
+# makes a copy of the input data by default (use copy=F if undesired)
+round_all_numeric_values <- function(dt, digits=3, copy=T) {
+  if (copy) dt <- data.table(dt)
+  for (nm in names(dt)) {
+    if (is.numeric(dt[[nm]])) {
+      dt[, (nm) := round(get(nm), digits)]
+    }
+  }
+  dt
+}
+
+# custom made display of datatable
+# displaying a copy of the table (copy made in the rounding function)
+my_datatable <- function(dt, ..., digits=3) {
+  DT::datatable(round_all_numeric_values(dt, digits=digits), ..., 
+                extensions = 'Buttons', options = list(
+                  dom = 'ifrtpB', buttons = c('copy', 'csv')))
+}
+
+```
+
+# Introduction
+
+<h5>EDB Productivity Benchmarking </h5>
+
+This page aims to present results that relate to the EDB (Electricity Distribution Businesses) Productivity Benchmarking project. This content is still work in progress.
+
+It is inspired by the [report](https://comcom.govt.nz/regulated-industries/electricity-lines/electricity-distributor-performance-and-data/productivity-and-efficiency-study-of-electricity-distributors?target=documents&root=356755)  delivered by CEPA for the Commerce commission that assesses the productivity of EDBs over time in New Zealand.
+
+Different pages have been built to present results for different methodologies:
+
+* [Index-based MTFP methodology](https://datascientistnz.github.io/edb_productivity_dashboard/quarto/mtfp)
+* [Econometric methodology](https://datascientistnz.github.io/edb_productivity_dashboard) - coming soon
