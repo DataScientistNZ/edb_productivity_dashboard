@@ -1,0 +1,446 @@
+---
+title: "EDB Productivity"
+format: 
+  dashboard:
+    scrolling: true 
+    nav-buttons:
+      - icon: gitlab
+        href: https://github.com/DataScientistNZ/edb_productivity_dashboard
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+```{r, echo=F}
+
+# round all numeric values to n digits (n=3 by default)
+# we do so to allow a nice display
+# makes a copy of the input data by default (use copy=F if undesired)
+round_all_numeric_values <- function(dt, digits=3, copy=T) {
+  if (copy) dt <- data.table(dt)
+  for (nm in names(dt)) {
+    if (is.numeric(dt[[nm]])) {
+      dt[, (nm) := round(get(nm), digits)]
+    }
+  }
+  dt
+}
+
+# custom made display of datatable
+# displaying a copy of the table (copy made in the rounding function)
+my_datatable <- function(dt, ..., digits=3) {
+  DT::datatable(round_all_numeric_values(dt, digits=digits), ..., 
+                extensions = 'Buttons', options = list(
+                  dom = 'ifrtpB', buttons = c('copy', 'csv')))
+}
+
+```
+
+# Documentation
+
+## documentation content
+
+### col1
+
+<h5>EDB Productivity Benchmarking </h5>
+
+This work is inspired by the [report](https://comcom.govt.nz/regulated-industries/electricity-lines/electricity-distributor-performance-and-data/productivity-and-efficiency-study-of-electricity-distributors?target=documents&root=356755)  delivered by CEPA for the Commerce commission that assesses the productivity of EDBs (Electricity Distribution Businesses) over time in New Zealand.
+
+<h5>Index-based benchmarking - MTFP approach </h5>
+
+TFP (Total Factor Productivity) is a technique that measures the productivity of EDBs over time by measuring the relationship between the inputs used and the outputs delivered. 
+Where an EDB is able to deliver more outputs for a given level of inputs, this reflects an increase in its productivity.
+MTFP - Multilateral Total Factor Productivity - allows to extend this to compare productivity levels between networks providers.
+
+Similar to CEPA's study, the considered inputs are:
+
+* Opex to operate and maintain the network.
+* The flow of capital services.
+
+The inflation indices considered to adjust the inputs are the same as in the CEPA analysis (namely 40% PPI and 60% LCI for opex, and CGPI for the flow of capital services). 
+
+Regarding outputs, different sets have been considered in the analysis, and outputs assumptions are detailed with the presented results.
+
+### col2
+
+<h5>MTFP formula</h5>
+
+$$
+MTFP_{\ k, t} = exp(\ ln\_MTFP_{k, t}\ )
+$$
+
+$$
+ln\_MTFP_{k, t} = \sum_{i \in \{inputs,\ outputs\}}^{}  \Phi(i) \ \cdot \ 
+\frac{S_{i,k,t} + \overline{S_i}}{2} \ \cdot [ln(Q_{i,k,t}) - \overline{ln(Q_i)}]  
+$$ 
+
+where:
+
+
+$i \ \text{: input or output}$
+
+$k \ \text{: firm}$
+
+$t \ \text{: year}$
+
+$Q_{i,k,t} \ \text{: Quantity of inputs or outputs i for firm k for year t}$
+
+$P_{i,k,t} \ \text{: Price of inputs or outputs i for firm k for year t}$
+
+$\Phi(i)  \ \text{: 1 if i is an output, -1 if i is an input}$
+
+$\overline{ln(Q_i)} \ = \ \mathop{mean}_{k, t} \ \ (\ ln(Q_{i, k, t})\ )$
+
+$S_{i, k, t} \ = (P_{i,k,t} \ \cdot \ Q_{i,k,t})\  / \ \sum_{j \in \{inputs\ or\ outputs\}}^{} P_{j,k,t} \ \cdot \ Q_{j,k,t}$
+
+$\overline{S_i} \ = \ \mathop{mean}_{k, t} \ \ (S_{i, k, t})$
+
+```{r, echo=F}
+
+# load resources and set common variables
+source(file.path(here::here(), "R", "00_index_based_mtfp.R"))
+source(file.path(here::here(), "R", "00_echarts.R"))
+source(file.path(here::here(), "R", "00_edb_status.R"))
+options(scipen=999)
+
+# specify model...
+my_inputs <- c("flow_capital_services_real", "opex_real")
+my_inputs_nominal <- c("flow_capital_services", "opex")
+
+dt <- fread(file.path(here::here(), "data", "extracted_data.csv"))
+```
+
+
+# MTFP [validation set]
+
+```{r, echo=F}
+
+# [prices obtained by linear regression]
+my_outputs_s0 <- c("nb_connections", "length_circuit")
+my_output_prices_s0 <- c(330, 3000)
+
+res_all <- compute_mtfp(dt, inputs = my_inputs, inputs_nominal = my_inputs_nominal,
+                        outputs = my_outputs_s0, output_prices = my_output_prices_s0,
+                        years_filter = 2017:2021, 
+                        edbs_filter=c("Alpine Energy", "Orion NZ", "Vector Lines"))
+res_all <- rescale_index(res_all, years_filter = "2017", edbs_filter="Vector Lines")
+res_all <- merge(res_all, get_edb_status())  # add status feature
+
+res_all[, rank := frankv(mtfp, order=-1, ties.method = "min"), by="disc_yr"]
+
+```
+
+## text into model
+<h5>Index-Based MTFP - Validation Set </h5>
+This page presents results for the MTFP method with the validation set.
+The validation set includes only 3 EDBs (Vector, Alpine and Orion) and only a few years of data (from 2017 to 2021).
+
+The following outputs have been considered:
+
+*  `{r} my_outputs_s0[1]` with an unitary price of `{r} my_output_prices_s0[1]`
+*  `{r} my_outputs_s0[2]` with an unitary price of `{r} my_output_prices_s0[2]`
+
+
+## result - all
+
+```{r, echo=F}
+
+
+# res_all
+# res_non_exempt[, rank := frankv(mtfp, order=-1, ties.method = "min"), by="disc_yr"]
+
+eplot_line(res_all, "disc_yr", "mtfp", groupby="edb", x_lab="") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0("MTFP (", "Validation Set", ")"))
+
+
+```
+
+
+```{r, echo=F}
+
+my_datatable(res_all)
+
+```
+
+
+# MTFP [Outputs 1]
+
+```{r, echo=F}
+
+my_outputs_s1 <- c("nb_connections", "length_circuit")
+my_output_prices_s1 <- c(330, 3000)
+
+res_all <- compute_mtfp(dt, inputs = my_inputs, inputs_nominal = my_inputs_nominal,
+                        outputs = my_outputs_s1, output_prices = my_output_prices_s1)
+res_all <- rescale_index(res_all, years_filter = "2017")
+res_all <- merge(res_all, get_edb_status())  # add status feature
+
+res_all[, rank := frankv(mtfp, order=-1, ties.method = "min"), by="disc_yr"]
+
+```
+
+## text into model
+<h5>Index-Based MTFP - Outputs1 </h5>
+This page presents results for the MTFP method with the outputs set 1. 
+The following outputs have been considered:
+
+*  `{r} my_outputs_s1[1]` with an unitary price of `{r} my_output_prices_s1[1]`
+*  `{r} my_outputs_s1[2]` with an unitary price of `{r} my_output_prices_s1[2]`
+
+
+## result - NonExempt and Exempt
+
+```{r, echo=F}
+
+my_status <- "NonExempt"
+res_non_exempt <- res_all[status == my_status]
+# res_non_exempt[, rank := frankv(mtfp, order=-1, ties.method = "min"), by="disc_yr"]
+
+eplot_line(res_non_exempt, "disc_yr", "mtfp", groupby="edb", x_lab="") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0("MTFP (", my_status, ")"))
+
+
+```
+
+```{r, echo=F}
+
+my_status <- "Exempt"
+res_exempt <- res_all[status == my_status]
+# res_exempt[, rank := frankv(mtfp, order=-1, ties.method = "min"), by="disc_yr"]
+
+eplot_line(res_exempt, "disc_yr", "mtfp", groupby="edb", x_lab="") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0("MTFP (", my_status, ")"))
+
+
+```
+
+## display table of results
+
+```{r, echo=F}
+
+round_all_numeric_values <- function(dt, digits=3) {
+  dt <- data.table(dt)
+  for (nm in names(dt)) {
+    if (is.numeric(dt[[nm]])) {
+      dt[, (nm) := round(get(nm), digits)]
+    }
+  }
+  dt
+}
+
+my_datatable(res_non_exempt)
+
+```
+
+```{r, echo=F}
+
+my_datatable(res_exempt)
+
+```
+
+
+
+## Industry-wise productivity
+
+```{r, echo=F}
+
+res_industry <- res_all[, .(mtfp_industry = exp(sum(log(mtfp)))), by="disc_yr"]
+
+res_industry[, edb := "industry"]
+res_industry <- rescale_index(res_industry, field="mtfp_industry", years_filter = 2013)
+
+
+eplot_line(res_industry, "disc_yr", "mtfp_industry", groupby="edb", x_lab="") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0("[WIP] ", "MTFP (", "industry", ")"))
+
+```
+
+```{r, echo=F}
+my_datatable(res_industry)
+```
+
+
+# MTFP [Outputs 1b]
+
+```{r, echo=F}
+
+my_outputs_s1b <- c("nb_connections", "length_circuit")
+my_output_prices_s1b <- c(775, 2105)
+
+res_all <- compute_mtfp(dt, inputs = my_inputs, inputs_nominal = my_inputs_nominal,
+                        outputs = my_outputs_s1b, output_prices = my_output_prices_s1b)
+res_all <- rescale_index(res_all, years_filter = "2017")
+res_all <- merge(res_all, get_edb_status())  # add status feature
+
+res_all[, rank := frankv(mtfp, order=-1, ties.method = "min"), by="disc_yr"]
+
+```
+
+## text into model
+<h5>Index-Based MTFP - Outputs 1b </h5>
+This page presents results for the MTFP method with the outputs set 1b. 
+The following outputs have been considered:
+
+*  `{r} my_outputs_s1b[1]` with an unitary price of `{r} my_output_prices_s1b[1]`
+*  `{r} my_outputs_s1b[2]` with an unitary price of `{r} my_output_prices_s1b[2]`
+
+
+## result - NonExempt and Exempt
+
+```{r, echo=F}
+
+my_status <- "NonExempt"
+res_non_exempt <- res_all[status == my_status]
+# res_non_exempt[, rank := frankv(mtfp, order=-1, ties.method = "min"), by="disc_yr"]
+
+eplot_line(res_non_exempt, "disc_yr", "mtfp", groupby="edb", x_lab="") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0("MTFP (", my_status, ")"))
+
+
+```
+
+```{r, echo=F}
+
+my_status <- "Exempt"
+res_exempt <- res_all[status == my_status]
+# res_exempt[, rank := frankv(mtfp, order=-1, ties.method = "min"), by="disc_yr"]
+
+eplot_line(res_exempt, "disc_yr", "mtfp", groupby="edb", x_lab="") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0("MTFP (", my_status, ")"))
+
+
+```
+
+## display table of results
+
+```{r, echo=F}
+
+my_datatable(res_non_exempt)
+
+```
+
+```{r, echo=F}
+
+my_datatable(res_exempt)
+
+```
+
+
+
+
+# MTFP [Outputs 2]
+
+```{r, echo=F}
+
+# [prices obtained by linear regression]
+my_outputs_s2 <- c("nb_connections", "length_circuit", "mva_underground")
+my_output_prices_s2 <- c(480, 3640, 10640)
+
+res_all <- compute_mtfp(dt, inputs = my_inputs, inputs_nominal = my_inputs_nominal,
+                        outputs = my_outputs_s2, output_prices = my_output_prices_s2)
+res_all <- rescale_index(res_all, years_filter = "2017")
+res_all <- merge(res_all, get_edb_status())  # add status feature
+
+res_all[, rank := frankv(mtfp, order=-1, ties.method = "min"), by="disc_yr"]
+
+```
+
+## text into model
+<h5>Index-Based MTFP - Outputs 2 </h5>
+This page presents results for the MTFP method with the outputs set 2. 
+The following outputs have been considered:
+
+*  `{r} my_outputs_s2[1]` with an unitary price of `{r} my_output_prices_s2[1]`
+*  `{r} my_outputs_s2[2]` with an unitary price of `{r} my_output_prices_s2[2]`
+*  `{r} my_outputs_s2[3]` with an unitary price of `{r} my_output_prices_s2[3]` 
+
+
+## result - NonExempt and Exempt
+
+```{r, echo=F}
+
+my_status <- "NonExempt"
+res_non_exempt <- res_all[status == my_status]
+# res_non_exempt[, rank := frankv(mtfp, order=-1, ties.method = "min"), by="disc_yr"]
+
+eplot_line(res_non_exempt, "disc_yr", "mtfp", groupby="edb", x_lab="") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0("MTFP (", my_status, ")"))
+
+
+```
+
+```{r, echo=F}
+
+my_status <- "Exempt"
+res_exempt <- res_all[status == my_status]
+# res_exempt[, rank := frankv(mtfp, order=-1, ties.method = "min"), by="disc_yr"]
+
+eplot_line(res_exempt, "disc_yr", "mtfp", groupby="edb", x_lab="") |>
+  e_legend(
+    orient = 'vertical',
+    right = 0,
+    top = "middle"
+  ) |>
+  e_grid(right = 200, left=50, bottom=30) |>
+  e_title(paste0("MTFP (", my_status, ")"))
+
+
+```
+
+## display table of results
+
+```{r, echo=F}
+
+my_datatable(res_non_exempt)
+
+```
+
+```{r, echo=F}
+
+my_datatable(res_exempt)
+
+```
+
+
