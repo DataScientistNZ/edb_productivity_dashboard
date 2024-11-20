@@ -69,7 +69,7 @@ Regarding outputs, different sets have been considered in the analysis, and outp
 
 <h5>Formulas</h5>
 
-[TODO: add below content]:
+TODO: add below content:
 
 * generalise below Cobb Douglas Formula to n outputs and introduce notations
 * Introduce benchmarked quantity as ratio of fair Cobb-Douglas cost for given inputs by actual cost 
@@ -104,7 +104,8 @@ res_all <- compute_simple_econometric_benchmark(
 res_all <- merge(res_all, get_edb_status())  # add status feature
 res_all[, rank := frankv(get(prod_idx_nm), order=-1, ties.method = "min"), by="disc_yr"]
 
-m <- cobb_douglas_regression(dt, my_input, my_outputs, other_variables)
+m <- cobb_douglas_regression(dt[disc_yr %in% years_filter & edb %in% edbs_filter], 
+                             my_input, my_outputs, other_variables)
 
 
 ```
