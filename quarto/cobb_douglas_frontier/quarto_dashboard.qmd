@@ -104,7 +104,8 @@ res_all <- compute_simple_econometric_benchmark(
 res_all <- merge(res_all, get_edb_status())  # add status feature
 res_all[, rank := frankv(get(prod_idx_nm), order=-1, ties.method = "min"), by="disc_yr"]
 
-m <- cobb_douglas_regression(dt[disc_yr %in% years_filter & edb %in% edbs_filter], 
+m <- cobb_douglas_regression(dt[disc_yr %in% 2017:2021 & 
+                                  edb %in% c("Alpine Energy", "Orion NZ", "Vector Lines")], 
                              my_input, my_outputs, other_variables)
 
 
@@ -230,6 +231,8 @@ res_all <- compute_simple_econometric_benchmark(dt, my_input, my_outputs,
                                                 other_variables=other_variables, prod_idx_nm=prod_idx_nm)
 res_all <- merge(res_all, get_edb_status())  # add status feature
 res_all[, rank := frankv(get(prod_idx_nm), order=-1, ties.method = "min"), by="disc_yr"]
+
+m <- cobb_douglas_regression(dt, my_input, my_outputs, other_variables)
 
 ```
 
