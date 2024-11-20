@@ -7,6 +7,9 @@ format:
       - text: Index-based
         icon: graph-up-arrow
         href: https://datascientistnz.github.io/edb_productivity_dashboard/quarto/mtfp
+      - text: Cobb-Douglas Frontier
+        icon: graph-up-arrow
+        href: https://datascientistnz.github.io/edb_productivity_dashboard/quarto/cobb_douglas_frontier
       - text: Code
         icon: github
         href: https://github.com/DataScientistNZ/edb_productivity_dashboard
@@ -51,4 +54,4 @@ It is inspired by the [report](https://comcom.govt.nz/regulated-industries/elect
 Different pages have been built to present results for different methodologies:
 
 * [Index-based MTFP methodology](https://datascientistnz.github.io/edb_productivity_dashboard/quarto/mtfp)
-* [Econometric methodology](https://datascientistnz.github.io/edb_productivity_dashboard) - coming soon
+* ["Econometric" methodology](https://datascientistnz.github.io/edb_productivity_dashboard/quarto/cobb_douglas_frontier)
