@@ -3,7 +3,7 @@ library(ggplot2)
 options(scipen=999)
 set.seed(6)
 
-nb_firms <- 12
+nb_firms <- 20
 efficiencies <- round(rnorm(nb_firms, 1, 0.15), 4)
 # efficiencies <- c(1., 1.1, 0.9, 0.8, 1.2, 1.05, 0.95, 1.15, 0.85)
 
@@ -15,7 +15,7 @@ stopifnot(length(efficiencies) == length(size_proxy))
 years <- 2021:2023
 
 # number of cost drivers implicit from their sensitivities
-cost_drivers_sensitivities <- c(0.4, 0.3, 0.2, 0.05)
+cost_drivers_sensitivities <- c(0.25, 0.02, 0.05, 0.5)
 cost_driver_avg_growth <- 0.0
 
 # make sure implied economy of scales are reasonable
@@ -55,9 +55,9 @@ for (mc_i in 1:nb_runs) {
     }
   }
   
-  dt
+  # dt
   dt <- dcast(dt, firm + year ~ cost_driver_id, value.var = "cost_driver_value")
-  dt
+  # dt
   
   c_0 <- 100.
   dt[, fair_cost := c_0 * exp(cost_drivers_sensitivities[1] * log(cost_driver_1) +
@@ -114,13 +114,13 @@ mc_means - dt[["actual_efficiency"]]
 mc_std
 confidence 
 
-# mc_coef_means <- mc_coef_cum1 / nb_runs
-# mc_coef_std <- sqrt(mc_coef_cum2 / nb_runs - mc_coef_means ^ 2)
-# coef_confidence <- 1.96 * mean(mc_coef_std) / sqrt(nb_runs)
-# 
-# mc_coef_means
-# mc_coef_std
-# coef_confidence
+mc_coef_means <- mc_coef_cum1 / nb_runs
+mc_coef_std <- sqrt(mc_coef_cum2 / nb_runs - mc_coef_means ^ 2)
+coef_confidence <- 1.96 * mean(mc_coef_std) / sqrt(nb_runs)
+
+mc_coef_means
+mc_coef_std
+coef_confidence
 
 v <- as.numeric(l_tmp)
 ggplot(data.table(values=v), aes(x = values, y = ..count../sum(..count..))) + 
@@ -139,6 +139,13 @@ ggplot(data.table(values=v), aes(x = values, y = ..count../sum(..count..))) +
     sum(v < efficiencies[2]-2*cost_drivers_sensitivities[length(cost_drivers_sensitivities)])) / nb_runs
 
 
+meh <- sapply(0:(length(firms)-1),
+                function(i) round(mean(dt[["assessed_efficiency_omit"]][(i*length(years)+1):((i+1)*length(years))]), 4))
+meh <- setNames(meh, efficiencies)
+cor(meh, as.numeric(names(meh)))
+mean(abs(meh - as.numeric(names(meh))))
+
+
 means <- sapply(0:(length(firms)-1), 
                 function(i) round(mean(mc_means[(i*length(years)+1):((i+1)*length(years))]), 4))
 named_means <- setNames(means, efficiencies)
@@ -148,7 +155,7 @@ mean(abs(efficiencies - named_means))
 cor(efficiencies, named_means)
 mean(mc_std)
 
-dt
+# dt
 
 err <- err / nb_runs
 corrr <- corrr / nb_runs

@@ -15,9 +15,67 @@ format:
 editor: 
   markdown: 
     wrap: 72
+    
+fontsize: 13px
 ---
 
 ```{r, echo=F}
+
+library(ggplot2)
+
+my_bar_gplot <- function(dt, y_numerator, y_denominator=NULL, groupby, plot_disc_yr, flipped_axes=T) {
+  
+  if (!is.null(y_denominator)) {
+    dt_plot <- data.table(dt)[, `:=`(metric = get(y_numerator)/get(y_denominator))
+                              ][,  c("disc_yr", "edb", groupby, "metric"), with=F]
+  } else {
+    dt_plot <- data.table(dt)[, `:=`(metric = get(y_numerator))][,  c("disc_yr", "edb", groupby, "metric"), with=F]
+  }
+  
+  dt_plot2 <- dt_plot[, .(metric = mean(metric)), 
+                      by=c("edb", groupby)][, disc_yr := overall_period]
+  dt_plot <- rbind(dt_plot, dt_plot2)
+  # hack to have desired order
+  dt_plot[ , my_order := match(get(groupby), sort(unique(dt_plot[[groupby]]))) * 1000000 + metric]
+  
+  dt_plot <- dt_plot[order(my_order)]
+  
+  if (flipped_axes) {
+    p <- ggplot(dt_plot[disc_yr == plot_disc_yr], 
+           aes(x = metric, y = reorder(edb, my_order, desc=T), fill = get(groupby))) +
+      theme_minimal() + 
+      theme(
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        axis.text.y = element_text(margin = margin(r = -8))
+      )
+  } else {
+    p <- ggplot(dt_plot[disc_yr == plot_disc_yr], 
+                aes(y = metric, x = reorder(edb, my_order, desc=T), fill = get(groupby))) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
+      theme(
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(margin = margin(r = 8))
+      )
+  }
+  
+  p <- p + geom_bar(stat = "identity", alpha=0.8, position = position_dodge()) + 
+    labs(
+      # title = paste0(y_numerator, " / ", y_denominator, "   (", plot_disc_yr, ")"),
+      x = "",
+      y = "",
+      fill = "")
+  
+  if (!is.null(y_denominator)) {
+    p <- p + ggtitle(paste0(y_numerator, " / ", y_denominator, "   (", plot_disc_yr, ")"))
+  } else {
+    p <- p + ggtitle(paste0(y_numerator, "   (", plot_disc_yr, ")"))
+  }
+  
+  p
+}
 
 # round all numeric values to n digits (n=3 by default)
 # we do so to allow a nice display
@@ -218,6 +276,37 @@ my_datatable(res_exempt)
 
 ```
 
+## Benchmarking
+
+```{r, echo=F}
+
+# define generic descriptors
+latest_year <- max(dt$disc_yr)
+overall_period <- paste0(min(dt$disc_yr), "-", latest_year)
+
+dt_edb_info <- fread(file.path(here::here(), "data", "edb_regulatorystatus_and_peergroup.csv"))
+res_all <- merge(res_all, dt_edb_info[, -"status", with=F], by="edb")
+
+my_bar_gplot(res_all, y_numerator = "prod_idx", groupby="PAT_peergroup", plot_disc_yr=latest_year)
+```
+
+```{r, echo=F}
+my_bar_gplot(res_all, y_numerator = "prod_idx", groupby="PAT_peergroup", plot_disc_yr=overall_period)
+```
+
+
+## Reverse Benchmarking
+
+```{r, echo=F}
+
+res_all[, "1 / prod_idx" := 1/prod_idx]
+
+my_bar_gplot(res_all, y_numerator = "1 / prod_idx", groupby="PAT_peergroup", plot_disc_yr=latest_year)
+```
+
+```{r, echo=F}
+my_bar_gplot(res_all, y_numerator = "1 / prod_idx", groupby="PAT_peergroup", plot_disc_yr=overall_period)
+```
 
 # [Outputs 2]
 
@@ -293,4 +382,34 @@ my_datatable(res_exempt)
 
 ```
 
+## Benchmarking
 
+```{r, echo=F}
+
+# define generic descriptors
+latest_year <- max(dt$disc_yr)
+overall_period <- paste0(min(dt$disc_yr), "-", latest_year)
+
+dt_edb_info <- fread(file.path(here::here(), "data", "edb_regulatorystatus_and_peergroup.csv"))
+res_all <- merge(res_all, dt_edb_info[, -"status", with=F], by="edb")
+
+my_bar_gplot(res_all, y_numerator = "prod_idx", groupby="PAT_peergroup", plot_disc_yr=latest_year)
+```
+
+```{r, echo=F}
+my_bar_gplot(res_all, y_numerator = "prod_idx", groupby="PAT_peergroup", plot_disc_yr=overall_period)
+```
+
+
+## Reverse Benchmarking
+
+```{r, echo=F}
+
+res_all[, "1 / prod_idx" := 1/prod_idx]
+
+my_bar_gplot(res_all, y_numerator = "1 / prod_idx", groupby="PAT_peergroup", plot_disc_yr=latest_year)
+```
+
+```{r, echo=F}
+my_bar_gplot(res_all, y_numerator = "1 / prod_idx", groupby="PAT_peergroup", plot_disc_yr=overall_period)
+```

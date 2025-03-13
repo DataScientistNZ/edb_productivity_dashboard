@@ -9,6 +9,7 @@ dt <- dt[network == "All"]
 # not all data before 2013, simplifies quite a lot of things (particularly SAIDI...)
 dt <- dt[disc_yr >= 2013]
 dt <- dt[disc_yr <= 2023]
+# dt <- dt[disc_yr <= 2024]
 
 # below is arguably wrong
 dt <- dt[disc_yr == obs_yr]
@@ -160,7 +161,7 @@ dt_flat[, flow_capital_services_real := flow_capital_services * cgpi_real]
 dt_flat[, annual_charge_real := opex_real + flow_capital_services_real]
 
 # Create an artificial saidi_unplanned_norm
-dt_flat[,saidi_unplanned_norm := saidi_total_norm - saidi_planned]
+dt_flat[, saidi_unplanned_norm := saidi_total_norm - saidi_planned]
 
 fwrite(dt_flat, file.path("data", "extracted_data.csv"))
 

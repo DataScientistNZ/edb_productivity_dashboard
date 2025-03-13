@@ -2,6 +2,18 @@ library(data.table)
 library(dplyr)
 library(echarts4r)
 
+# returns 20 colours we're okay using
+my_ecolors <- function() {
+  # colours picked from https://medialab.github.io/iwanthue/
+  # or https://sashamaps.net/docs/resources/20-colors/
+  c('#e6194B', '#3cb44b', '#ffe119', '#4363d8', 
+    '#f58231', '#911eb4', '#42d4f4', '#f032e6', 
+    '#bfef45', '#fabed4', '#469990', '#dcbeff', 
+    '#9A6324', '#fffaa1', '#800000', '#aaffc3', 
+    '#808000', '#ffd8b1', '#000075', '#a9a9a9')
+}
+
+
 # generate nice eplot
 # x must behave nicely as a factor... recommend to sort beforehands
 # y must be a numeric
@@ -33,7 +45,7 @@ my_pretty_breaks <- function(x) {
 
 
 eplot_line <- function(dt, x, y, groupby=NULL, x_lab=NULL, y_lab=NULL, decimals=3,
-                       x_include_zero=F) {
+                       x_include_zero=F, my_colors=NULL) {
   
   # hack to display x as 2016 not 2,016
   label_hack <- list(
@@ -62,7 +74,10 @@ eplot_line <- function(dt, x, y, groupby=NULL, x_lab=NULL, y_lab=NULL, decimals=
     e_legend(bottom = 0) |>
     e_toolbox() |>
     e_toolbox_feature(feature = c("saveAsImage", "restore", "dataZoom", "dataView")) |>
-    e_aria(enabled = TRUE) 
+    e_aria(enabled = TRUE)
+  
+  if (!is.null(my_colors)) p <- p |> e_color(my_ecolors())
+  
   if (!x_include_zero) p <- p |> e_x_axis_(x)
   p
 }

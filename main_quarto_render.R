@@ -18,6 +18,5 @@ my_quarto_render <- function(input_file, ...){
 
 
 my_quarto_render("quarto_main_dashboard.qmd")
-
 my_quarto_render("quarto/mtfp/quarto_dashboard.qmd")
 my_quarto_render("quarto/cobb_douglas_frontier/quarto_dashboard.qmd")
